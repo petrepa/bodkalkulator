@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bodkalkulator — Boligsal med mellomfinansiering</title>
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --card: #fff;
+    --accent: #2d5a27;
+    --accent-light: #e8f0e6;
+    --red: #b33;
+    --red-light: #fde8e8;
+    --text: #1a1a1a;
+    --muted: #555;
+    --light: #888;
+    --border: #ddd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 1rem;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2rem;
+  }
+  h1 {
+    font-size: clamp(1.3rem, 4vw, 1.7rem);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-explainer {
+    background: linear-gradient(135deg, #e8f0e6 0%, #f0f4ff 100%);
+    border: 1px solid #c5d5c0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .hero-explainer summary {
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.95rem;
+  }
+  .hero-explainer summary::marker { color: var(--accent); }
+  .hero-explainer p { margin-top: 0.75rem; }
+  .hero-explainer ul {
+    margin: 0.5rem 0 0.5rem 1.25rem;
+    font-size: 0.88rem;
+  }
+  .hero-explainer li { margin-bottom: 0.3rem; }
+
+  .section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--light);
+    margin: 1.75rem 0 0.6rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-hint {
+    font-size: 0.8rem;
+    color: var(--light);
+    margin: -0.3rem 0 0.6rem;
+    font-style: italic;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border);
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+  input {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fff;
+    -moz-appearance: textfield;
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-light);
+  }
+  .input-group { display: flex; flex-direction: column; }
+
+  .bid-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .bid-card {
+    border-left: 4px solid var(--border);
+  }
+  .bid-card.a { border-left-color: #4a7c59; }
+  .bid-card.b { border-left-color: #7c4a4a; }
+  .bid-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+  }
+  .bid-card.a .bid-label { color: #4a7c59; }
+  .bid-card.b .bid-label { color: #7c4a4a; }
+  .bid-fields { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .result-area {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid var(--accent);
+    margin-top: 1.25rem;
+  }
+  .result-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .result-col h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .result-col.a h3 { color: #4a7c59; }
+  .result-col.b h3 { color: #7c4a4a; }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    padding: 0.15rem 0;
+    gap: 0.5rem;
+  }
+  .result-row span:last-child { text-align: right; white-space: nowrap; }
+  .result-row.total {
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.4rem;
+    margin-top: 0.3rem;
+  }
+
+  .verdict {
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  .verdict.positive { background: var(--accent-light); color: var(--accent); }
+  .verdict.neutral { background: #f0f0f0; color: var(--muted); }
+  .detail-text {
+    font-size: 0.8rem;
+    color: var(--light);
+    text-align: center;
+    margin-top: 0.4rem;
+  }
+
+  .cost-summary {
+    background: #f9f9f6;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    line-height: 1.7;
+  }
+  .cost-summary strong { color: var(--accent); }
+
+  .tip-box {
+    background: #f0f4ff;
+    border: 1px solid #c5d5f0;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.85rem;
+    margin-top: 1.25rem;
+    line-height: 1.7;
+  }
+  .tip-box strong { color: #2a4a7f; }
+
+  footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--light);
+    text-align: center;
+    line-height: 1.6;
+  }
+  footer a { color: var(--muted); }
+
+  .neg { color: var(--red); }
+
+  @media (max-width: 600px) {
+    body { padding: 0.75rem; }
+    .bid-grid, .result-grid { grid-template-columns: 1fr; }
+    .field-grid { grid-template-columns: 1fr 1fr; }
+    .result-row { font-size: 0.78rem; }
+    .result-row.total { font-size: 0.88rem; }
+    .verdict { font-size: 0.88rem; }
+  }
+  @media (max-width: 380px) {
+    .field-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bodkalkulator for boligsal</h1>
+  <p class="subtitle">Kva bod løner seg eigentleg best? Rekn ut netto etter mellomfinansiering, meglarkostnader og løpande utgifter.</p>
+
+  <details class="hero-explainer">
+    <summary>Kva er denne kalkulatoren, og kven er han for?</summary>
+    <p>
+      Denne kalkulatoren er laga for deg som <strong>sel ein bustad samstundes som du kjøper ein ny</strong>, og har mellomfinansiering (brufinansiering) i perioden mellom kjøp og sal.
+    </p>
+    <p>Typisk situasjon:</p>
+    <ul>
+      <li>Du har kjøpt ny bustad og teke over (eller skal snart ta over)</li>
+      <li>Du sel den gamle bustaden din, og ventar på bod</li>
+      <li>Banken har gitt deg mellomfinansiering for å dekke gapet</li>
+      <li>No kjem det inn fleire bod med ulik pris og ulik overtakingsdato</li>
+    </ul>
+    <p>
+      <strong>Problemet:</strong> Eit høgare bod med sein overtaking kan faktisk gi deg <em>mindre</em> pengar i lomma enn eit lågare bod med tidleg overtaking. Kvar dag du sit med to bustader kostar deg pengar &mdash; renter på mellomfinansieringa, fellesutgifter, straum, forsikring, og kanskje renter på gamalt lån.
+    </p>
+    <p>
+      <strong>Løysinga:</strong> Skriv inn dei to boda du vurderer, og kalkulatoren reknar ut kva du faktisk sit att med etter alle kostnader. Du får også ein dagleg ventekostnad som gjer det enkelt å rekne i hovudet under ein hektisk bodrunde.
+    </p>
+  </details>
+</header>
+
+<div class="section-title">Løpande kostnader på bustaden du sel</div>
+<p class="section-hint">Kva betalar du kvar månad for bustaden fram til ny eigar tek over?</p>
+<div class="card">
+  <div class="field-grid">
+    <div class="input-group">
+      <label>Fellesutgifter / mnd</label>
+      <input type="number" id="fellesutgifter" value="4000" step="100" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Forsikring / mnd</label>
+      <input type="number" id="forsikring" value="0" step="100" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Straum og nett / mnd</label>
+      <input type="number" id="stroem" value="500" step="100" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Andre mnd-kostnader</label>
+      <input type="number" id="andre_kost" value="0" step="100" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Resterande lån på bustaden</label>
+      <input type="number" id="gammal_laan" value="0" step="10000" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Rente på lånet (%)</label>
+      <input type="number" id="gammal_rente" value="5.0" step="0.1" inputmode="decimal">
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Mellomfinansiering</div>
+<p class="section-hint">Brulån frå banken som dekker gapet mellom kjøp og sal. Sjekk låneavtalen din.</p>
+<div class="card">
+  <div class="field-grid">
+    <div class="input-group">
+      <label>Mellomfinansiering (kr)</label>
+      <input type="number" id="mellomfin" value="500000" step="10000" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Rente (%)</label>
+      <input type="number" id="mellomfin_rente" value="6.0" step="0.1" inputmode="decimal">
+    </div>
+    <div class="input-group">
+      <label>Startar (dato)</label>
+      <input type="date" id="mellomfin_start" value="2026-06-01">
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Meglarkostnader</div>
+<p class="section-hint">Sjekk oppdragsavtalen for eksakte tal. Provisjon er typisk 1&ndash;3 %, faste kostnader varierer.</p>
+<div class="card">
+  <div class="field-grid">
+    <div class="input-group">
+      <label>Provisjon (%)</label>
+      <input type="number" id="megler_prosent" value="1.5" step="0.1" inputmode="decimal">
+    </div>
+    <div class="input-group">
+      <label>Faste kostnader (kr)</label>
+      <input type="number" id="megler_fast" value="50000" step="1000" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>Oppgjerstid (dagar etter overtak.)</label>
+      <input type="number" id="oppgjoer_dagar" value="5" step="1" inputmode="numeric">
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Samanlikn to bod</div>
+<div class="bid-grid">
+  <div class="card bid-card a">
+    <div class="bid-label">Bod A</div>
+    <div class="bid-fields">
+      <div class="input-group">
+        <label>Bodsum (kr)</label>
+        <input type="number" id="bod_a" value="3500000" step="10000" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>Overtakingsdato</label>
+        <input type="date" id="dato_a" value="2026-07-01">
+      </div>
+    </div>
+  </div>
+  <div class="card bid-card b">
+    <div class="bid-label">Bod B</div>
+    <div class="bid-fields">
+      <div class="input-group">
+        <label>Bodsum (kr)</label>
+        <input type="number" id="bod_b" value="3400000" step="10000" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>Overtakingsdato</label>
+        <input type="date" id="dato_b" value="2026-09-01">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="result-area" id="results">
+  <div class="result-title">Resultat</div>
+  <div class="result-grid">
+    <div class="result-col a" id="res_a"></div>
+    <div class="result-col b" id="res_b"></div>
+  </div>
+  <div class="verdict" id="verdict"></div>
+  <div class="detail-text" id="detail"></div>
+  <div class="cost-summary" id="taktikk"></div>
+</div>
+
+<div class="tip-box">
+  <strong>Tips for bodrunden:</strong><br>
+  Bruk kalkulatoren til å finne break-even &mdash; juster prisen på det eine bodet til resultatet snur. Då veit du nøyaktig kor mykje lågare eit tidleg bod kan vere og framleis løne seg like godt som eit høgare bod med sein overtaking.
+</div>
+
+<footer>
+  Kalkulatoren er eit hjelpemiddel og erstattar ikkje rådgiving frå bank eller megler.
+  Alle utrekningar er forenklingar &mdash; sjekk alltid med banken din for eksakte tal på renter og kostnader.
+</footer>
+
+<script>
+const fields = [
+  'fellesutgifter','forsikring','stroem','gammal_laan','gammal_rente','andre_kost',
+  'mellomfin','mellomfin_rente','mellomfin_start',
+  'megler_prosent','megler_fast','oppgjoer_dagar',
+  'bod_a','dato_a','bod_b','dato_b'
+];
+
+fields.forEach(id => {
+  document.getElementById(id).addEventListener('input', calculate);
+});
+
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function dateVal(id) { return new Date(document.getElementById(id).value); }
+function fmt(n) { return Math.round(n).toLocaleString('nb-NO'); }
+function fmtKr(n) { return fmt(n) + ' kr'; }
+
+function daysBetween(a, b) {
+  return Math.max(0, Math.round((b - a) / (1000 * 60 * 60 * 24)));
+}
+
+function calcBid(bodsum, overtakDato) {
+  const mellomfinStart = dateVal('mellomfin_start');
+  const mellomfin = num('mellomfin');
+  const mellomfinRente = num('mellomfin_rente') / 100;
+
+  const oppgjoerDagar = num('oppgjoer_dagar');
+  const oppgjoerDato = new Date(overtakDato);
+  oppgjoerDato.setDate(oppgjoerDato.getDate() + oppgjoerDagar);
+
+  const dagarMellomfin = daysBetween(mellomfinStart, oppgjoerDato);
+  const mellomfinKost = mellomfin * mellomfinRente * dagarMellomfin / 365;
+
+  const gammalLaan = num('gammal_laan');
+  const gammalRente = num('gammal_rente') / 100;
+  const dagarGammalLaan = daysBetween(mellomfinStart, overtakDato);
+  const gammalLaanKost = gammalLaan * gammalRente * dagarGammalLaan / 365;
+
+  const mndKost = num('fellesutgifter') + num('forsikring') + num('stroem') + num('andre_kost');
+  const maanader = dagarGammalLaan / 30.44;
+  const loepandeKost = mndKost * maanader;
+
+  const meglerProsent = num('megler_prosent') / 100;
+  const meglerFast = num('megler_fast');
+  const meglerKost = bodsum * meglerProsent + meglerFast;
+
+  const totalKost = mellomfinKost + gammalLaanKost + loepandeKost + meglerKost;
+  const netto = bodsum - totalKost - gammalLaan;
+
+  return {
+    bodsum, overtakDato, oppgjoerDato,
+    dagarMellomfin, mellomfinKost,
+    dagarGammalLaan, gammalLaanKost,
+    loepandeKost, mndKost, maanader,
+    meglerKost, totalKost, netto, gammalLaan
+  };
+}
+
+function renderCol(r, label) {
+  return `
+    <h3>${label}: ${fmtKr(r.bodsum)}</h3>
+    <div class="result-row"><span>Bodsum</span><span>${fmtKr(r.bodsum)}</span></div>
+    <div class="result-row"><span>Meglarkostnad</span><span class="neg">−${fmtKr(r.meglerKost)}</span></div>
+    ${r.gammalLaan > 0 ? `<div class="result-row"><span>Innfri gamalt lån</span><span class="neg">−${fmtKr(r.gammalLaan)}</span></div>` : ''}
+    <div class="result-row"><span>Mellomfin. rente (${r.dagarMellomfin} dg)</span><span class="neg">−${fmtKr(r.mellomfinKost)}</span></div>
+    ${r.gammalLaanKost > 0 ? `<div class="result-row"><span>Rente gamalt lån (${r.dagarGammalLaan} dg)</span><span class="neg">−${fmtKr(r.gammalLaanKost)}</span></div>` : ''}
+    <div class="result-row"><span>Løpande kost. (${r.maanader.toFixed(1)} mnd)</span><span class="neg">−${fmtKr(r.loepandeKost)}</span></div>
+    <div class="result-row total"><span>Netto i lomma</span><span>${fmtKr(r.netto)}</span></div>
+  `;
+}
+
+function calculate() {
+  const a = calcBid(num('bod_a'), dateVal('dato_a'));
+  const b = calcBid(num('bod_b'), dateVal('dato_b'));
+
+  document.getElementById('res_a').innerHTML = renderCol(a, 'Bod A');
+  document.getElementById('res_b').innerHTML = renderCol(b, 'Bod B');
+
+  const diff = a.netto - b.netto;
+  const v = document.getElementById('verdict');
+  const d = document.getElementById('detail');
+
+  if (Math.abs(diff) < 500) {
+    v.className = 'verdict neutral';
+    v.textContent = `Praktisk talt likt — berre ${fmtKr(Math.abs(diff))} i forskjell`;
+    d.textContent = 'Andre faktorar (tryggleik, fleksibilitet, kjøpar-soliditet) kan vege tyngst her.';
+  } else if (diff > 0) {
+    v.className = 'verdict positive';
+    v.textContent = `Bod A gir ${fmtKr(diff)} meir netto`;
+    d.textContent = dagTekst(a, b);
+  } else {
+    v.className = 'verdict positive';
+    v.textContent = `Bod B gir ${fmtKr(Math.abs(diff))} meir netto`;
+    d.textContent = dagTekst(b, a);
+  }
+
+  const taktikk = document.getElementById('taktikk');
+  const dagKost = a.mndKost / 30.44
+    + (num('mellomfin') * num('mellomfin_rente') / 100 / 365)
+    + (num('gammal_laan') * num('gammal_rente') / 100 / 365);
+  const mndKost = dagKost * 30.44;
+
+  taktikk.innerHTML = `
+    <strong>Din ventekostnad:</strong> ca. ${fmtKr(dagKost)}/dag — ${fmtKr(mndKost)}/mnd<br>
+    For kvar månad seinare overtaking må bodet vere minst <strong>${fmtKr(mndKost)}</strong> høgare for å kompensere.
+  `;
+}
+
+function dagTekst(winner, loser) {
+  const ekstraDagar = daysBetween(winner.overtakDato, loser.overtakDato);
+  if (ekstraDagar > 0) return `Sjølv med ${ekstraDagar} dagar seinare overtaking er dette bodet best.`;
+  if (ekstraDagar < 0) return `Tidlegare overtaking og høgare netto — klart best.`;
+  return `Same overtakingsdato — høgaste bod vinn.`;
+}
+
+calculate();
+</script>
+
+</body>
+</html>
